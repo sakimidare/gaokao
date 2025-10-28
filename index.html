@@ -194,15 +194,56 @@
         }
 
         /* 底部操作 */
+        /* 底部操作 */
         .footer-actions {
             text-align: center;
             margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
         }
         .footer-actions button {
-            padding: 10px 30px;
+            padding: 12px 35px; /* 增大按钮 */
             font-size: 16px;
-            margin: 0 10px;
+            margin: 0 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease; /* 添加过渡效果 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
+        /* 保存按钮（绿色系） */
+        .footer-actions #saveBtn {
+            background-color: #28a745;
+            color: white;
+        }
+        .footer-actions #saveBtn:hover {
+            background-color: #1e7e34;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 提交按钮（红色系，更醒目） */
+        .footer-actions #submitBtn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .footer-actions #submitBtn:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 校验状态显示 */
+        .validation-status {
+            font-size: 12px;
+            font-weight: normal;
+        }
+        .status-unvalidated { color: red; }
+        .status-passed { color: #28a745; }
+        .status-failed { color: #ffc107; } /* 黄色警告 */
+        
     </style>
 </head>
 <body>
@@ -246,7 +287,7 @@
             </div>
 
         <div class="footer-actions">
-            <button style="background-color: #28a745;">保存</button>
+            <button id="saveBtn" style="background-color: #28a745;">保存</button>
             <button id="submitBtn" style="background-color: #dc3545;">提交</button>
         </div>
     </div>
@@ -256,6 +297,7 @@
         let universityData = [];
         let volunteerList = [];
         const MAX_TOTAL_VOLUNTEERS = 96;
+        let isSubmitted = false; // 新增：志愿是否已提交的状态锁定变量
 
         /**
          * 异步加载大学数据
@@ -328,13 +370,17 @@
                 
                 const groupManagementDiv = document.createElement('div');
                 groupManagementDiv.className = 'group-management';
+                
+                // 提交后禁止添加专业组
+                const disabledAttribute = isSubmitted ? 'disabled' : '';
+                
                 groupManagementDiv.innerHTML = `
                     <label>添加专业组:</label>
-                    <select id="groupSelect-${volIndex}" style="width: 200px;">
+                    <select id="groupSelect-${volIndex}" style="width: 200px;" ${disabledAttribute}>
                         <option value="">-- 选择专业组 --</option>
                         ${availableGroups.map(g => `<option value="${g.code}">${g.code} ${g.name}</option>`).join('')}
                     </select>
-                    <button onclick="addProfessionalGroup(${volIndex})">添加</button>
+                    <button onclick="addProfessionalGroup(${volIndex})" ${disabledAttribute}>添加</button>
                     <span style="color:#999; margin-left: auto;">(已添加 ${Object.keys(volunteer.groupChoices).length} 个)</span>
                 `;
                 block.appendChild(groupManagementDiv);
@@ -354,12 +400,18 @@
 
                     const groupCodeDiv = document.createElement('div');
                     groupCodeDiv.className = 'group-code';
-                    groupCodeDiv.innerHTML = `专业组<br>${groupMeta.code}<br><span style="font-size:10px; font-weight:normal;">[<a href="#" onclick="removeProfessionalGroup(${volIndex}, '${groupCode}')">删除</a>]</span>`;
+                    
+                    // 提交后禁止删除专业组
+                    const removeLink = isSubmitted ? '' : `<a href="#" onclick="removeProfessionalGroup(${volIndex}, '${groupCode}')">删除</a>`;
+                    
+                    groupCodeDiv.innerHTML = `专业组<br>${groupMeta.code}<br><span style="font-size:10px; font-weight:normal;">[${removeLink}]</span>`;
                     groupContainer.appendChild(groupCodeDiv);
 
                     const majorsList = document.createElement('div');
                     majorsList.className = 'majors-list';
 
+                    const selectedMajorsInGroup = groupChoice.majors.filter(m => m !== "");
+                    
                     for (let i = 0; i < groupMeta.maxMajors; i++) {
                         const currentChoice = groupChoice.majors[i] || "";
                         if (currentChoice) filledCount++;
@@ -367,24 +419,30 @@
                         const majorItem = document.createElement('div');
                         majorItem.className = 'major-item';
                         
+                        // 生成下拉框选项
                         const options = [
                             `<option value="">-- 请选择专业 --</option>`,
-                            ...groupMeta.majors.map(m =>
-                                `<option value="${m.code}" ${currentChoice === m.code ? 'selected' : ''}>${m.code} ${m.name}</option>`
-                            )
+                            ...groupMeta.majors.map(m => {
+                                const isSelectedElsewhere = selectedMajorsInGroup.includes(m.code) && m.code !== currentChoice;
+                                return `<option value="${m.code}" 
+                                                ${currentChoice === m.code ? 'selected' : ''}
+                                                ${isSelectedElsewhere ? 'disabled style="color: #aaa;"' : ''}>
+                                            ${m.code} ${m.name} ${isSelectedElsewhere ? ' (已选)' : ''}
+                                        </option>`
+                            })
                         ].join('');
 
                         majorItem.innerHTML = `
                             <div class="major-index">${i + 1}.</div>
                             <div class="major-select">
-                                <select onchange="updateSelectedMajor(${volIndex}, '${groupCode}', ${i}, this.value)">
+                                <select onchange="updateSelectedMajor(${volIndex}, '${groupCode}', ${i}, this.value)" ${disabledAttribute}>
                                     ${options}
                                 </select>
                             </div>
                             <div class="major-actions">
-                                <button onclick="moveMajorUp(${volIndex}, '${groupCode}', ${i})">↑</button>
-                                <button onclick="moveMajorDown(${volIndex}, '${groupCode}', ${i})">↓</button>
-                                <button onclick="clearMajor(${volIndex}, '${groupCode}', ${i})">X</button>
+                                <button onclick="moveMajorUp(${volIndex}, '${groupCode}', ${i})" ${disabledAttribute}>↑</button>
+                                <button onclick="moveMajorDown(${volIndex}, '${groupCode}', ${i})" ${disabledAttribute}>↓</button>
+                                <button onclick="clearMajor(${volIndex}, '${groupCode}', ${i})" ${disabledAttribute}>X</button>
                             </div>
                         `;
                         majorsList.appendChild(majorItem);
@@ -397,7 +455,7 @@
                     const isChecked = groupChoice.adjust;
                     adjustmentDiv.innerHTML = `
                         服从<br>调剂
-                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleAdjustment(${volIndex}, '${groupCode}', this.checked)">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleAdjustment(${volIndex}, '${groupCode}', this.checked)" ${disabledAttribute}>
                     `;
                     groupContainer.appendChild(adjustmentDiv);
 
@@ -409,6 +467,7 @@
             });
             
             updateProgress(filledCount);
+            updateControlBarState(); // 新增：更新顶部操作按钮状态
         }
 
         /**
@@ -419,22 +478,46 @@
             document.getElementById('progressBarFill').style.width = `${progress}%`;
             document.getElementById('progressText').textContent = `填报进度: ${filledCount} / ${MAX_TOTAL_VOLUNTEERS} (${Math.round(progress)}%)`;
         }
+        
+        /**
+         * 更新顶部和底部控制栏的禁用状态
+         */
+        function updateControlBarState() {
+            const disableState = isSubmitted;
+            
+            // 顶部批量操作按钮和输入
+            document.getElementById('selectAll').disabled = disableState;
+            document.getElementById('deselectAll').disabled = disableState;
+            document.getElementById('moveUpBtn').disabled = disableState;
+            document.getElementById('moveDownBtn').disabled = disableState;
+            document.getElementById('deleteSelected').disabled = disableState;
+            document.getElementById('checkAll').disabled = disableState;
+            document.getElementById('uniCodeInput').disabled = disableState;
+            document.getElementById('addVolunteerBtn').disabled = disableState;
+
+            // 底部保存和提交按钮 (提交按钮在它的点击事件中被禁用)
+            document.getElementById('submitBtn').disabled = disableState;
+            // 找到保存按钮（假设它是footer-actions的第一个按钮）
+            const saveButton = document.querySelector('.footer-actions button:first-child');
+            if (saveButton) {
+                saveButton.disabled = disableState;
+            }
+        }
+
 
         /**
-         * 初始化时填充示例志愿 (不再默认添加专业组)
+         * 初始化时填充示例志愿 (保持不变)
          */
         function initializeVolunteers() {
             const uni1 = findUniversity('1001');
             const uni2 = findUniversity('1002');
             
-            // 示例：添加一个大学，但不添加专业组 (需要用户手动添加)
             if (uni1) {
                  volunteerList.push({
                     uniCode: '1001',
                     groupChoices: {}
                 });
             }
-            // 示例：添加一个大学，并添加一个专业组 (01)，用于演示已填报状态
             if (uni2) {
                 const groupMeta2 = findGroupMeta('1002', '01');
                 if (groupMeta2) {
@@ -452,13 +535,12 @@
 
         // --- 专业组添加/删除逻辑 ---
 
-        /**
-         * 添加选定的专业组到大学志愿中
-         */
         function addProfessionalGroup(volIndex) {
+            if (isSubmitted) return; // 提交后禁止操作
+            
             const selectElement = document.getElementById(`groupSelect-${volIndex}`);
             const groupCode = selectElement.value;
-
+            // ... (其余逻辑不变)
             if (!groupCode) {
                 alert("请选择一个专业组!");
                 return;
@@ -469,21 +551,17 @@
 
             if (groupMeta) {
                 const majorsCount = groupMeta.maxMajors || 6;
-                
-                // 添加到数据结构
                 volunteerList[volIndex].groupChoices[groupCode] = {
                     majors: Array(majorsCount).fill(""),
                     adjust: false
                 };
-                
                 renderVolunteers();
             }
         }
 
-        /**
-         * 从大学志愿中删除专业组
-         */
         function removeProfessionalGroup(volIndex, groupCode) {
+            if (isSubmitted) return; // 提交后禁止操作
+            
             if (confirm(`确定要删除 ${volunteerList[volIndex].uniCode} 的专业组 ${groupCode} 吗？这会清空该组下所有专业选择。`)) {
                 delete volunteerList[volIndex].groupChoices[groupCode];
                 renderVolunteers();
@@ -495,17 +573,18 @@
 
         // 1. 添加志愿
         document.getElementById('addVolunteerBtn').addEventListener('click', () => {
+            if (isSubmitted) return; // 提交后禁止操作
+
             const codeInput = document.getElementById('uniCodeInput');
             const uniCode = codeInput.value.trim();
             const uni = findUniversity(uniCode);
-
+            // ... (其余逻辑不变)
             if (uni) {
                 if (volunteerList.length >= MAX_TOTAL_VOLUNTEERS) {
                     alert(`志愿数量已达上限 ${MAX_TOTAL_VOLUNTEERS}！`);
                     return;
                 }
                 
-                // 仅添加大学，专业组列表为空
                 volunteerList.push({
                     uniCode: uniCode,
                     groupChoices: {} 
@@ -517,7 +596,7 @@
             }
         });
 
-        // 2. 批量操作：全选/全不选/删除
+        // 2. 批量操作：全选/全不选/删除 (不需要在函数内部检查，因为按钮已被禁用)
         document.getElementById('selectAll').addEventListener('click', () => {
             document.querySelectorAll('.uni-checkbox').forEach(cb => cb.checked = true);
         });
@@ -527,6 +606,7 @@
         });
 
         document.getElementById('deleteSelected').addEventListener('click', () => {
+            // ... (逻辑不变)
             const checkedBoxes = Array.from(document.querySelectorAll('.uni-checkbox:checked'));
             if (checkedBoxes.length === 0) {
                 alert("请先选择要删除的志愿。");
@@ -542,7 +622,7 @@
             }
         });
 
-        // 3. 志愿上移/下移
+        // 3. 志愿上移/下移 (不需要在函数内部检查，因为按钮已被禁用)
         function moveVolunteer(direction) {
             const checkedBoxes = Array.from(document.querySelectorAll('.uni-checkbox:checked'));
             if (checkedBoxes.length !== 1) {
@@ -563,34 +643,40 @@
 
         // 4. 单个志愿操作：删除
         function removeVolunteer(index) {
+            if (isSubmitted) return; // 提交后禁止操作
+            
             if (confirm(`确定要删除志愿 ${index + 1} 吗？`)) {
                 volunteerList.splice(index, 1);
                 renderVolunteers();
             }
         }
 
-        // 5. 专业选择和调剂
+        // 5. 专业选择和调剂 (需检查状态)
 
         function updateSelectedMajor(volIndex, groupCode, majorIndex, majorCode) {
+            if (isSubmitted) return; // 提交后禁止操作
             const majorsArray = volunteerList[volIndex].groupChoices[groupCode].majors;
             majorsArray[majorIndex] = majorCode;
             renderVolunteers();
         }
 
         function clearMajor(volIndex, groupCode, majorIndex) {
+            if (isSubmitted) return; // 提交后禁止操作
             const majorsArray = volunteerList[volIndex].groupChoices[groupCode].majors;
             majorsArray[majorIndex] = "";
             renderVolunteers();
         }
 
         function toggleAdjustment(volIndex, groupCode, isChecked) {
+            if (isSubmitted) return; // 提交后禁止操作
             if (volunteerList[volIndex]) {
                 volunteerList[volIndex].groupChoices[groupCode].adjust = isChecked;
             }
         }
         
-        // 6. 专业行上移/下移
+        // 6. 专业行上移/下移 (需检查状态)
         function moveMajor(volIndex, groupCode, majorIndex, direction) {
+            if (isSubmitted) return; // 提交后禁止操作
             const majors = volunteerList[volIndex].groupChoices[groupCode].majors;
             const targetIndex = majorIndex + direction;
 
@@ -603,13 +689,30 @@
         function moveMajorUp(volIndex, groupCode, majorIndex) { moveMajor(volIndex, groupCode, majorIndex, -1); }
         function moveMajorDown(volIndex, groupCode, majorIndex) { moveMajor(volIndex, groupCode, majorIndex, 1); }
 
-        // 7. 提交按钮功能
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            alert("保存成功！");
+        });
+        // 7. 提交按钮功能 (核心修改)
         document.getElementById('submitBtn').addEventListener('click', () => {
-            console.log("最终提交的志愿数据:", volunteerList);
+            if (isSubmitted) {
+                alert("志愿已提交，不能重复操作。");
+                return;
+            }
             
+            // 1. 弹出提交成功的对话框
             alert("提交成功！您的志愿已锁定，请等待录取结果。");
             
+            // 2. 设置状态锁
+            isSubmitted = true;
+            
+            // 3. 更新显示状态
             document.querySelector('.user-info div:nth-child(6)').innerHTML = "状态: 已提交";
+            
+            // 4. 禁用所有相关按钮和输入
+            updateControlBarState();
+            
+            // 5. 重新渲染列表，禁用列表内部的控件
+            renderVolunteers();
         });
         
         // 页面启动时加载数据
