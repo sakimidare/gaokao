@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高考志愿填报系统</title>
+    <style>
+        /* CSS 样式 */
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .header {
+            background-color: #008000;
+            color: white;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 考生信息区 */
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            height: 10px;
+            background-color: #e0e0e0;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%; 
+            background-color: #008000;
+        }
+
+        /* 操作按钮栏 */
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #008000;
+        }
+        .action-bar button, .action-bar input[type="button"] {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        .action-bar input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 150px;
+        }
+        .add-uni-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        /* 志愿列表区 */
+        #volunteer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .volunteer-block {
+            border: 1px solid #ddd;
+            border-left: 5px solid #008000;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+
+        .uni-header {
+            background-color: #e6ffe6;
+            padding: 8px;
+            margin: -10px -10px 10px -10px;
+            border-bottom: 1px solid #ccc;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 专业组管理区域样式 */
+        .group-management {
+            padding: 10px 0 15px;
+            border-bottom: 1px dashed #ccc;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .group-management select {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .group-management button {
+            padding: 5px 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .group-container {
+            display: flex;
+            border-bottom: 1px dashed #eee;
+            padding: 5px 0;
+        }
+
+        .group-code {
+            width: 100px;
+            flex-shrink: 0;
+            padding-right: 10px;
+            font-weight: bold;
+            text-align: center;
+            align-self: center;
+        }
+
+        .majors-list {
+            flex-grow: 1;
+        }
+
+        .major-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px dotted #eee;
+        }
+        .major-item:last-child { border-bottom: none; }
+
+        .major-index { width: 30px; text-align: right; margin-right: 5px; }
+        .major-select { flex-grow: 1; margin-right: 10px; }
+        .major-select select {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .major-actions {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            width: 150px;
+            flex-shrink: 0;
+        }
+        .major-actions button {
+            padding: 3px 8px;
+            background-color: #f8f9fa;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .adjustment {
+            width: 100px;
+            text-align: center;
+            flex-shrink: 0;
+            padding-left: 10px;
+        }
+
+        /* 底部操作 */
+        .footer-actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .footer-actions button {
+            padding: 10px 30px;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span>高考志愿填报系统</span>
+        <a href="#" style="color: white; font-size: 14px; text-decoration: none;">[退出]</a>
+    </div>
+
+    <div class="container">
+        <div class="user-info">
+            <div>考生号: 1145141919810</div>
+            <div>姓名: 王左</div>
+            <div>批次: 本科批</div>
+            <div>分数：666</div>
+            <div>名次：2000</div>
+            <div>状态: 待提交</div>
+        </div>
+
+        <div id="progressText" class="progress-text">填报进度: 0 / 96 (0%)</div>
+        <div class="progress-bar">
+            <div id="progressBarFill" class="progress-bar-fill"></div>
+        </div>
+
+        <div class="action-bar">
+            <button id="selectAll">全选</button>
+            <button id="deselectAll">全不选</button>
+            <button id="moveUpBtn">上移</button>
+            <button id="moveDownBtn">下移</button>
+            <button id="deleteSelected">删除</button>
+            <button id="checkAll">全部校验</button>
+            <div class="add-uni-section">
+                <label for="uniCodeInput">代号:</label>
+                <input type="text" id="uniCodeInput" placeholder="输入大学代号" value="1001">
+                <input type="button" value="添加志愿" id="addVolunteerBtn">
+            </div>
+        </div>
+
+        <div id="volunteer-list">
+            <p id="loading-text">正在加载大学数据...</p>
+            </div>
+
+        <div class="footer-actions">
+            <button style="background-color: #28a745;">保存</button>
+            <button id="submitBtn" style="background-color: #dc3545;">提交</button>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let universityData = [];
+        let volunteerList = [];
+        const MAX_TOTAL_VOLUNTEERS = 96;
+
+        /**
+         * 异步加载大学数据
+         */
+        async function loadUniversityData() {
+            try {
+                const response = await fetch('universities.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP 错误! 状态: ${response.status}`);
+                }
+                universityData = await response.json();
+                const loadingElement = document.getElementById('loading-text');
+                if (loadingElement) loadingElement.remove();
+                
+                initializeVolunteers();
+            } catch (error) {
+                console.error("加载大学数据失败:", error);
+                const loadingElement = document.getElementById('loading-text');
+                if (loadingElement) loadingElement.textContent = "加载大学数据失败，请检查 universities.json 文件。";
+            }
+        }
+
+        /**
+         * 查找大学数据
+         */
+        function findUniversity(uniCode) {
+            return universityData.find(u => u.code === uniCode);
+        }
+        
+        /**
+         * 查找专业组的元数据
+         */
+        function findGroupMeta(uniCode, groupCode) {
+            const uni = findUniversity(uniCode);
+            return uni ? uni.groups.find(g => g.code === groupCode) : null;
+        }
+
+        /**
+         * 渲染志愿列表
+         */
+        function renderVolunteers() {
+            const listContainer = document.getElementById('volunteer-list');
+            listContainer.innerHTML = '';
+            let filledCount = 0;
+
+            volunteerList.forEach((volunteer, volIndex) => {
+                const uni = findUniversity(volunteer.uniCode);
+                if (!uni) return;
+
+                const block = document.createElement('div');
+                block.className = 'volunteer-block';
+                block.dataset.index = volIndex;
+
+                // 1. 大学头部
+                const uniHeader = document.createElement('div');
+                uniHeader.className = 'uni-header';
+                uniHeader.innerHTML = `
+                    <label>
+                        <input type="checkbox" class="uni-checkbox" data-index="${volIndex}">
+                        <span style="display:inline-block; width: 40px; text-align:right;">${volIndex + 1}.</span> [${uni.code}] ${uni.name}
+                    </label>
+                    <div style="font-size:12px; font-weight:normal;">
+                        <span style="color:red;">未校验</span> | <a href="#">修改</a> | <a href="#" onclick="removeVolunteer(${volIndex})">删除</a>
+                    </div>
+                `;
+                block.appendChild(uniHeader);
+
+                // 2. 专业组管理区域 (添加专业组)
+                const availableGroups = uni.groups.filter(g => !volunteer.groupChoices.hasOwnProperty(g.code));
+                
+                const groupManagementDiv = document.createElement('div');
+                groupManagementDiv.className = 'group-management';
+                groupManagementDiv.innerHTML = `
+                    <label>添加专业组:</label>
+                    <select id="groupSelect-${volIndex}" style="width: 200px;">
+                        <option value="">-- 选择专业组 --</option>
+                        ${availableGroups.map(g => `<option value="${g.code}">${g.code} ${g.name}</option>`).join('')}
+                    </select>
+                    <button onclick="addProfessionalGroup(${volIndex})">添加</button>
+                    <span style="color:#999; margin-left: auto;">(已添加 ${Object.keys(volunteer.groupChoices).length} 个)</span>
+                `;
+                block.appendChild(groupManagementDiv);
+
+                // 3. 专业组列表容器
+                const groupsContainer = document.createElement('div');
+                groupsContainer.className = 'groups-container';
+                
+                // 遍历已选择的专业组
+                Object.keys(volunteer.groupChoices).forEach(groupCode => {
+                    const groupMeta = findGroupMeta(uni.code, groupCode);
+                    if (!groupMeta) return;
+
+                    const groupChoice = volunteer.groupChoices[groupCode];
+                    const groupContainer = document.createElement('div');
+                    groupContainer.className = 'group-container';
+
+                    const groupCodeDiv = document.createElement('div');
+                    groupCodeDiv.className = 'group-code';
+                    groupCodeDiv.innerHTML = `专业组<br>${groupMeta.code}<br><span style="font-size:10px; font-weight:normal;">[<a href="#" onclick="removeProfessionalGroup(${volIndex}, '${groupCode}')">删除</a>]</span>`;
+                    groupContainer.appendChild(groupCodeDiv);
+
+                    const majorsList = document.createElement('div');
+                    majorsList.className = 'majors-list';
+
+                    for (let i = 0; i < groupMeta.maxMajors; i++) {
+                        const currentChoice = groupChoice.majors[i] || "";
+                        if (currentChoice) filledCount++;
+
+                        const majorItem = document.createElement('div');
+                        majorItem.className = 'major-item';
+                        
+                        const options = [
+                            `<option value="">-- 请选择专业 --</option>`,
+                            ...groupMeta.majors.map(m =>
+                                `<option value="${m.code}" ${currentChoice === m.code ? 'selected' : ''}>${m.code} ${m.name}</option>`
+                            )
+                        ].join('');
+
+                        majorItem.innerHTML = `
+                            <div class="major-index">${i + 1}.</div>
+                            <div class="major-select">
+                                <select onchange="updateSelectedMajor(${volIndex}, '${groupCode}', ${i}, this.value)">
+                                    ${options}
+                                </select>
+                            </div>
+                            <div class="major-actions">
+                                <button onclick="moveMajorUp(${volIndex}, '${groupCode}', ${i})">↑</button>
+                                <button onclick="moveMajorDown(${volIndex}, '${groupCode}', ${i})">↓</button>
+                                <button onclick="clearMajor(${volIndex}, '${groupCode}', ${i})">X</button>
+                            </div>
+                        `;
+                        majorsList.appendChild(majorItem);
+                    }
+                    groupContainer.appendChild(majorsList);
+
+                    // 服从调剂复选框
+                    const adjustmentDiv = document.createElement('div');
+                    adjustmentDiv.className = 'adjustment';
+                    const isChecked = groupChoice.adjust;
+                    adjustmentDiv.innerHTML = `
+                        服从<br>调剂
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleAdjustment(${volIndex}, '${groupCode}', this.checked)">
+                    `;
+                    groupContainer.appendChild(adjustmentDiv);
+
+                    groupsContainer.appendChild(groupContainer);
+                });
+                
+                block.appendChild(groupsContainer);
+                listContainer.appendChild(block);
+            });
+            
+            updateProgress(filledCount);
+        }
+
+        /**
+         * 更新进度条和文字
+         */
+        function updateProgress(filledCount) {
+            const progress = (filledCount / MAX_TOTAL_VOLUNTEERS) * 100;
+            document.getElementById('progressBarFill').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `填报进度: ${filledCount} / ${MAX_TOTAL_VOLUNTEERS} (${Math.round(progress)}%)`;
+        }
+
+        /**
+         * 初始化时填充示例志愿 (不再默认添加专业组)
+         */
+        function initializeVolunteers() {
+            const uni1 = findUniversity('1001');
+            const uni2 = findUniversity('1002');
+            
+            // 示例：添加一个大学，但不添加专业组 (需要用户手动添加)
+            if (uni1) {
+                 volunteerList.push({
+                    uniCode: '1001',
+                    groupChoices: {}
+                });
+            }
+            // 示例：添加一个大学，并添加一个专业组 (01)，用于演示已填报状态
+            if (uni2) {
+                const groupMeta2 = findGroupMeta('1002', '01');
+                if (groupMeta2) {
+                    volunteerList.push({
+                        uniCode: '1002',
+                        groupChoices: {
+                             '01': { majors: ['C1', 'C2', '', '', '', ''], adjust: false }
+                        }
+                    });
+                }
+            }
+            
+            renderVolunteers();
+        }
+
+        // --- 专业组添加/删除逻辑 ---
+
+        /**
+         * 添加选定的专业组到大学志愿中
+         */
+        function addProfessionalGroup(volIndex) {
+            const selectElement = document.getElementById(`groupSelect-${volIndex}`);
+            const groupCode = selectElement.value;
+
+            if (!groupCode) {
+                alert("请选择一个专业组!");
+                return;
+            }
+
+            const uniCode = volunteerList[volIndex].uniCode;
+            const groupMeta = findGroupMeta(uniCode, groupCode);
+
+            if (groupMeta) {
+                const majorsCount = groupMeta.maxMajors || 6;
+                
+                // 添加到数据结构
+                volunteerList[volIndex].groupChoices[groupCode] = {
+                    majors: Array(majorsCount).fill(""),
+                    adjust: false
+                };
+                
+                renderVolunteers();
+            }
+        }
+
+        /**
+         * 从大学志愿中删除专业组
+         */
+        function removeProfessionalGroup(volIndex, groupCode) {
+            if (confirm(`确定要删除 ${volunteerList[volIndex].uniCode} 的专业组 ${groupCode} 吗？这会清空该组下所有专业选择。`)) {
+                delete volunteerList[volIndex].groupChoices[groupCode];
+                renderVolunteers();
+            }
+        }
+
+
+        // --- 核心交互函数 ---
+
+        // 1. 添加志愿
+        document.getElementById('addVolunteerBtn').addEventListener('click', () => {
+            const codeInput = document.getElementById('uniCodeInput');
+            const uniCode = codeInput.value.trim();
+            const uni = findUniversity(uniCode);
+
+            if (uni) {
+                if (volunteerList.length >= MAX_TOTAL_VOLUNTEERS) {
+                    alert(`志愿数量已达上限 ${MAX_TOTAL_VOLUNTEERS}！`);
+                    return;
+                }
+                
+                // 仅添加大学，专业组列表为空
+                volunteerList.push({
+                    uniCode: uniCode,
+                    groupChoices: {} 
+                });
+                renderVolunteers();
+                codeInput.value = '';
+            } else {
+                alert(`未找到代号为 ${uniCode} 的大学，请检查代号。`);
+            }
+        });
+
+        // 2. 批量操作：全选/全不选/删除
+        document.getElementById('selectAll').addEventListener('click', () => {
+            document.querySelectorAll('.uni-checkbox').forEach(cb => cb.checked = true);
+        });
+
+        document.getElementById('deselectAll').addEventListener('click', () => {
+            document.querySelectorAll('.uni-checkbox').forEach(cb => cb.checked = false);
+        });
+
+        document.getElementById('deleteSelected').addEventListener('click', () => {
+            const checkedBoxes = Array.from(document.querySelectorAll('.uni-checkbox:checked'));
+            if (checkedBoxes.length === 0) {
+                alert("请先选择要删除的志愿。");
+                return;
+            }
+
+            if (confirm(`确定要删除选中的 ${checkedBoxes.length} 个志愿吗？`)) {
+                const indicesToDelete = checkedBoxes.map(cb => parseInt(cb.dataset.index)).sort((a, b) => b - a);
+                indicesToDelete.forEach(index => {
+                    volunteerList.splice(index, 1);
+                });
+                renderVolunteers();
+            }
+        });
+
+        // 3. 志愿上移/下移
+        function moveVolunteer(direction) {
+            const checkedBoxes = Array.from(document.querySelectorAll('.uni-checkbox:checked'));
+            if (checkedBoxes.length !== 1) {
+                alert("请单选一个志愿进行移动。");
+                return;
+            }
+
+            const index = parseInt(checkedBoxes[0].dataset.index);
+            const targetIndex = index + direction;
+
+            if (targetIndex >= 0 && targetIndex < volunteerList.length) {
+                [volunteerList[index], volunteerList[targetIndex]] = [volunteerList[targetIndex], volunteerList[index]];
+                renderVolunteers();
+            }
+        }
+        document.getElementById('moveUpBtn').addEventListener('click', () => moveVolunteer(-1));
+        document.getElementById('moveDownBtn').addEventListener('click', () => moveVolunteer(1));
+
+        // 4. 单个志愿操作：删除
+        function removeVolunteer(index) {
+            if (confirm(`确定要删除志愿 ${index + 1} 吗？`)) {
+                volunteerList.splice(index, 1);
+                renderVolunteers();
+            }
+        }
+
+        // 5. 专业选择和调剂
+
+        function updateSelectedMajor(volIndex, groupCode, majorIndex, majorCode) {
+            const majorsArray = volunteerList[volIndex].groupChoices[groupCode].majors;
+            majorsArray[majorIndex] = majorCode;
+            renderVolunteers();
+        }
+
+        function clearMajor(volIndex, groupCode, majorIndex) {
+            const majorsArray = volunteerList[volIndex].groupChoices[groupCode].majors;
+            majorsArray[majorIndex] = "";
+            renderVolunteers();
+        }
+
+        function toggleAdjustment(volIndex, groupCode, isChecked) {
+            if (volunteerList[volIndex]) {
+                volunteerList[volIndex].groupChoices[groupCode].adjust = isChecked;
+            }
+        }
+        
+        // 6. 专业行上移/下移
+        function moveMajor(volIndex, groupCode, majorIndex, direction) {
+            const majors = volunteerList[volIndex].groupChoices[groupCode].majors;
+            const targetIndex = majorIndex + direction;
+
+            if (targetIndex >= 0 && targetIndex < majors.length) {
+                [majors[majorIndex], majors[targetIndex]] = [majors[targetIndex], majors[majorIndex]];
+                renderVolunteers();
+            }
+        }
+
+        function moveMajorUp(volIndex, groupCode, majorIndex) { moveMajor(volIndex, groupCode, majorIndex, -1); }
+        function moveMajorDown(volIndex, groupCode, majorIndex) { moveMajor(volIndex, groupCode, majorIndex, 1); }
+
+        // 7. 提交按钮功能
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            console.log("最终提交的志愿数据:", volunteerList);
+            
+            alert("提交成功！您的志愿已锁定，请等待录取结果。");
+            
+            document.querySelector('.user-info div:nth-child(6)').innerHTML = "状态: 已提交";
+        });
+        
+        // 页面启动时加载数据
+        window.onload = loadUniversityData;
+    </script>
+</body>
+</html>
