@@ -5,7 +5,7 @@
         "groups": [
             {
                 "code": "01",
-                "name": "物理类",
+                "name": "01 专业组",
                 "maxMajors": 6,
                 "majors": [
                     { "code": "A1", "name": "计算机科学与技术" },
@@ -16,12 +16,13 @@
             },
             {
                 "code": "02",
-                "name": "历史类",
+                "name": "02 专业组",
                 "maxMajors": 6,
                 "majors": [
                     { "code": "B1", "name": "中国语言文学类" },
                     { "code": "B2", "name": "历史学" },
-                    { "code": "B3", "name": "哲学" }
+                    { "code": "B3", "name": "哲学" },
+                    { "code": "B4", "name": "创意写作" }
                 ]
             }
         ]
@@ -32,7 +33,7 @@
         "groups": [
             {
                 "code": "01",
-                "name": "物理类(工)",
+                "name": "01 专业组",
                 "maxMajors": 6,
                 "majors": [
                     { "code": "01", "name": "5️⃣✌️"},
@@ -46,11 +47,12 @@
             },
             {
                 "code": "02",
-                "name": "历史类",
+                "name": "02 专业组",
                 "maxMajors": 6,
                 "majors": [
                     { "code": "01", "name": "汉语言文学" },
-                    { "code": "02", "name": "工商管理" }
+                    { "code": "02", "name": "工商管理" },
+                    { "code": "03", "name": "创意写作" }
                 ]
             }
         ]
